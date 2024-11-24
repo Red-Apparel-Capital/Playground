@@ -1,0 +1,3 @@
+(library
+ (name node_templates)
+ (libraries node eio_main))
