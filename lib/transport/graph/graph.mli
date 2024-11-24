@@ -7,7 +7,7 @@ val create : source:Node.t -> 'a t
 val add_edge : genesis:Node.t -> exodus:Node.t -> 'a t -> unit
 
 (* Print entire graph *)
-val print_graph : 'a t -> unit
+val print : 'a t -> unit
 
 (* Process the entire graph asynchronously *)
-val process : env:Eio_unix.Stdenv.base -> 'a t -> unit
+val process : 'a t -> unit
