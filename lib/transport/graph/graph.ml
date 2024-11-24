@@ -10,10 +10,10 @@ let add_edge ~genesis ~exodus graph =
   in
   Hashtbl.replace graph.edges genesis (exodus :: genesis_neighbours)
 
-let print_graph graph =
+let traverse graph (action : node:Node.t -> unit) =
   let genesis = graph.source in
   let rec aux genesis =
-    Eio.traceln " [%s] " (Node.get_identifier genesis) ;
+    action ~node:genesis ;
     let neighbours =
       Hashtbl.find_opt graph.edges genesis |> Option.value ~default:[]
     in
@@ -21,4 +21,10 @@ let print_graph graph =
   in
   aux genesis
 
-let process ~env _graph = ignore env ; failwith ""
+let print graph =
+  let action ~node = Eio.traceln " [%s] " (Node.get_identifier node) in
+  traverse graph action
+
+let process graph =
+  let action ~node = Node.perform_action node in
+  traverse graph action

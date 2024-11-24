@@ -1,4 +1,4 @@
 (executable
  (public_name playground)
  (name main)
- (libraries eio_main graph node))
+ (libraries eio_main graph node_templates))
