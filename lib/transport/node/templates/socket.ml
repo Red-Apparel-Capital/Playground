@@ -1,19 +1,25 @@
+let max_message_size = 128
+
 (* Read one line from [client] and respond with "OK". *)
 let handle_client flow addr =
   Eio.traceln "Accepted connection from %a" Eio.Net.Sockaddr.pp addr ;
   let rec loop () =
     let from_client =
-      Eio.Buf_read.of_flow flow ~max_size:100 |> Eio.Buf_read.line
+      Eio.Buf_read.of_flow flow ~max_size:max_message_size |> Eio.Buf_read.line
     in
-    let msg_tokens = String.split_on_char ' ' (String.trim from_client) in
+    let msg_tokens = String.split_on_char '|' (String.trim from_client) in
     match msg_tokens with
-    | ["data"; msg] ->
-        Eio.Flow.copy_string (Printf.sprintf "Message is {%s}\n" msg) flow ;
+    | [time; price; volume] ->
+        Eio.Flow.copy_string
+          (Printf.sprintf "Message is {%s} {%s} {%s}\n" time price volume)
+          flow ;
         loop ()
     | ["/quit"] ->
-        Eio.Flow.copy_string "Quitting thanks!\n" flow
+        Eio.Flow.copy_string "Quitting!\n" flow
     | _ ->
-        Eio.Flow.copy_string "Invalid message format\n" flow ;
+        Eio.Flow.copy_string
+          (Printf.sprintf "Invalid message format: {%s}\n" from_client)
+          flow ;
         loop ()
   in
   loop ()
