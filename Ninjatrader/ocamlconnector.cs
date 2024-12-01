@@ -1,4 +1,4 @@
-	#region Using declarations
+#region Using declarations
 using System;
 using System.Net;
 using System.Collections.Generic;
@@ -42,7 +42,7 @@ namespace NinjaTrader.NinjaScript.Strategies
             {
                 Description = @"Enter the description for your new custom Strategy here.";
                 Name = "ocamlconnector";
-                Calculate = Calculate.OnBarClose;
+                Calculate = Calculate.OnPriceChange;
                 EntriesPerDirection = 1;
                 EntryHandling = EntryHandling.AllEntries;
                 IsExitOnSessionCloseStrategy = true;
@@ -59,52 +59,40 @@ namespace NinjaTrader.NinjaScript.Strategies
                 BarsRequiredToTrade = 20;
                 IsInstantiatedOnEachOptimizationIteration = true;
             }
-            else if (State == State.Configure)
+            else if (State == State.DataLoaded)
             {
-                AddDataSeries("ES DEC24", Data.BarsPeriodType.Minute, 1, Data.MarketDataType.Last);
-                // Initialize the TCP client connection
-                setup_client();
+				// Initialize the TCP client connection
+            	setup_client();
             }
-            else if (State == State.Terminated)
+			else if (State == State.Terminated)
             {
-                if (stream != null)
-                {
-                    stream.Close();
-                    stream = null;
-                }
-
-                if (client != null)
-                {
-                    client.Close();
-                    client = null;
-                }
+                if (stream != null) { stream.Close(); stream = null; }
+                if (client != null) { client.Close(); client = null; }
             }
         }
+		
+		protected override void OnMarketData(MarketDataEventArgs e)
+		{	
+			// Ensure the client and stream are initialized before using them
+            if (client == null || stream == null) return;
+			
+		    if (e.MarketDataType == MarketDataType.Last) // Process only last trades
+		    {
+		    	string message = $"{e.Time}|{e.Price}|{e.Volume}";
+				Print(message);
 
-        protected override void OnBarUpdate()
-        {
-            if (BarsInProgress != 0)
-                return;
-
-            // Ensure the client and stream are initialized before using them
-            if (client == null || stream == null)
-                return;
-            
-
-            string message = $"High: {High[0]}, Low: {Low[0]}, Close: {Close[0]}, Open: {Open[0]}";
-            Print(message);
-
-            byte[] dataToSend = Encoding.ASCII.GetBytes(message + "\n");
-            stream.Write(dataToSend, 0, dataToSend.Length);
-
-            // Reading response
-            byte[] buffer = new byte[1024];
-            int bytesRead = stream.Read(buffer, 0, buffer.Length);
-            string response = Encoding.ASCII.GetString(buffer, 0, bytesRead);
-
-            Print("Received from server: " + response);
-        }
-
+	            byte[] dataToSend = Encoding.ASCII.GetBytes(message + "\n");
+	            stream.Write(dataToSend, 0, dataToSend.Length);
+	
+	            // Reading response
+	            byte[] buffer = new byte[128];
+	            int bytesRead = stream.Read(buffer, 0, buffer.Length);
+	            string response = Encoding.ASCII.GetString(buffer, 0, bytesRead);
+	
+	            Print("Received from server: " + response);
+		    }
+		}
+		
         private void setup_client()
         {
             try
