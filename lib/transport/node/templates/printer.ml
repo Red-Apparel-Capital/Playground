@@ -3,13 +3,13 @@ let action ~in_buffer ~out_buffer:_ =
     (* Be aware that Eio.Stream.take is blocking *)
     let series : Node.series = Eio.Stream.take in_buffer in
     match series with
-    | Tick { datetime; price; volume } ->
+    | Tick { id; datetime; price; volume } ->
         let info =
-          Printf.sprintf "Datetime: %s, Price: %f, Volume: %f"
+          Printf.sprintf "Datetime: %s, Price: %f, Volume: %f ID: %s"
             (Timedesc.to_string datetime)
-            price volume
+            price volume id
         in
         Eio.traceln "%s" info
   done
 
-let create () = Node.create ~identifier:"printer" ~action
+let create () = Node.create ~id:"printer" ~action

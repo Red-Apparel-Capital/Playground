@@ -1,8 +1,6 @@
 let main ~net =
   (* Create nodes *)
-  let socket_node =
-    Node_templates.Socket.create ~identifier:"socket" ~port:1717 ~net
-  in
+  let socket_node = Node_templates.Socket.create ~id:"socket" ~port:1717 ~net in
   let printer_node = Node_templates.Printer.create () in
 
   (* Create graph *)

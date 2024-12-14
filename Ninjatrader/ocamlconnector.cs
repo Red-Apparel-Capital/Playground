@@ -80,16 +80,8 @@ namespace NinjaTrader.NinjaScript.Strategies
 		    {
 		    	string message = $"{e.Time}|{e.Price}|{e.Volume}";
 				Print(message);
-
 	            byte[] dataToSend = Encoding.ASCII.GetBytes(message + "\n");
 	            stream.Write(dataToSend, 0, dataToSend.Length);
-	
-	            // Reading response
-	            byte[] buffer = new byte[128];
-	            int bytesRead = stream.Read(buffer, 0, buffer.Length);
-	            string response = Encoding.ASCII.GetString(buffer, 0, bytesRead);
-	
-	            Print("Received from server: " + response);
 		    }
 		}
 		

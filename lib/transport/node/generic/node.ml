@@ -1,9 +1,15 @@
 let max_queue_size = 256
 
-type series = Tick of { datetime : Timedesc.t; price : float; volume : float }
+type series =
+  | Tick of {
+      id : string;
+      datetime : Timedesc.t;
+      price : float;
+      volume : float;
+    }
 
 type t = {
-  identifier : string;
+  id : string;
   in_buffer : series Eio.Stream.t;
   out_buffer : series Eio.Stream.t;
   action :
@@ -13,15 +19,15 @@ type t = {
 let used_identities : (string, unit) Hashtbl.t =
   Hashtbl.create Transport.Config.max_node_size
 
-let create ~identifier ~action =
-  match Hashtbl.mem used_identities identifier with
+let create ~id ~action =
+  match Hashtbl.mem used_identities id with
   | true -> failwith "Duplicate node name"
   | false ->
       let in_buffer = Eio.Stream.create max_queue_size in
       let out_buffer = Eio.Stream.create max_queue_size in
-      { identifier; action; in_buffer; out_buffer }
+      { id; action; in_buffer; out_buffer }
 
-let get_identifier node = node.identifier
+let get_id node = node.id
 
 let perform_action node =
   node.action ~in_buffer:node.in_buffer ~out_buffer:node.out_buffer
