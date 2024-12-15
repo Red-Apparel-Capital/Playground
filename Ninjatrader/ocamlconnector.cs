@@ -35,6 +35,7 @@ namespace NinjaTrader.NinjaScript.Strategies
         private NetworkStream stream;
         private string HOST = "127.0.0.1";
         private int PORT = 1717;
+        private int id = 0;
 
         protected override void OnStateChange()
         {
@@ -61,38 +62,33 @@ namespace NinjaTrader.NinjaScript.Strategies
             }
             else if (State == State.DataLoaded)
             {
-				// Initialize the TCP client connection
-            	setup_client();
+                // Initialize the TCP client connection
+                setup_client();
             }
-			else if (State == State.Terminated)
+            else if (State == State.Terminated)
             {
                 if (stream != null) { stream.Close(); stream = null; }
                 if (client != null) { client.Close(); client = null; }
             }
         }
-		
-		protected override void OnMarketData(MarketDataEventArgs e)
-		{	
-			// Ensure the client and stream are initialized before using them
-            if (client == null || stream == null) return;
-			
-		    if (e.MarketDataType == MarketDataType.Last) // Process only last trades
-		    {
-		    	string message = $"{e.Time}|{e.Price}|{e.Volume}";
-				Print(message);
 
-	            byte[] dataToSend = Encoding.ASCII.GetBytes(message + "\n");
-	            stream.Write(dataToSend, 0, dataToSend.Length);
-	
-	            // Reading response
-	            byte[] buffer = new byte[128];
-	            int bytesRead = stream.Read(buffer, 0, buffer.Length);
-	            string response = Encoding.ASCII.GetString(buffer, 0, bytesRead);
-	
-	            Print("Received from server: " + response);
-		    }
-		}
-		
+        protected override void OnMarketData(MarketDataEventArgs e)
+        {
+            // Ensure the client and stream are initialized before using them
+            if (client == null || stream == null) return;
+
+            if (e.MarketDataType == MarketDataType.Last) // Process only last trades
+            {
+                id++;
+                string message = $"{e.Time}|{e.Price}|{e.Volume}|{id}";
+                Print(message);
+                byte[] dataToSend = Encoding.ASCII.GetBytes(message + "\n");
+                stream.Write(dataToSend, 0, dataToSend.Length);
+                stream.Flush();
+
+            }
+        }
+
         private void setup_client()
         {
             try
