@@ -1,32 +1,42 @@
 (* Socket node template.
  * This file defines the template for a tcp socket node in the transport layer. *)
 
-let max_message_size = 4086
+let max_message_size = 1024
 
-let write_tick_data_to_buffer buffer id datetime price volume =
-  let datetime = Converters.convert_to_timedesc datetime in
-  let price = float_of_string price in
-  let volume = float_of_string volume in
-  Eio.Stream.add buffer (Node.Tick { id; datetime; price; volume })
+let write_tick_data_to_buffer buffer id_str datetime_str price_str volume_str =
+  let datetime = Converters.convert_to_timedesc datetime_str in
+  let price = float_of_string price_str in
+  let volume = float_of_string volume_str in
+  Eio.Stream.add buffer (Node.Tick { id = id_str; datetime; price; volume })
 
 let handle_client flow addr ~out =
   Eio.traceln "Accepted connection from %a" Eio.Net.Sockaddr.pp addr;
   let rec loop () =
-    let from_client =
-      Eio.Buf_read.of_flow flow ~max_size:max_message_size |> Eio.Buf_read.line
+    let lines_from_client =
+      Eio.Buf_read.of_flow flow ~max_size:max_message_size |> Eio.Buf_read.lines
     in
-    let msg_tokens = String.split_on_char '|' (String.trim from_client) in
-    match msg_tokens with
-    | [ datetime; price; volume; id ] ->
-        Eio.traceln "ID: %s" id;
-        write_tick_data_to_buffer out id datetime price volume;
-        loop ()
-    | [ "/quit" ] -> Eio.Flow.copy_string "Quitting!\n" flow
-    | _ ->
-        Eio.Flow.copy_string
-          (Printf.sprintf "Invalid message format: {%s}\n" from_client)
-          flow;
-        loop ()
+    let line_tokens line = String.trim line |> String.split_on_char '|' in
+
+    let process_lines =
+      Seq.map
+        (fun line ->
+          match line_tokens line with
+          | [ datetime_str; price_str; volume_str; id_str ] ->
+              write_tick_data_to_buffer out id_str datetime_str price_str
+                volume_str;
+              `loop
+          | [ "/quit" ] ->
+              Eio.traceln "Client requested shutdown";
+              Eio.Flow.close flow;
+              `stop
+          | _ ->
+              Eio.traceln "Invalid message: %s" line;
+              `loop)
+        lines_from_client
+    in
+    match Seq.exists (fun x -> x = `stop) process_lines with
+    | true -> ()
+    | false -> loop ()
   in
   loop ()
 
@@ -37,7 +47,7 @@ let run ~out socket =
 
 let action ~net addr ~in_buffer:_ ~out_buffer =
   Eio.Switch.run ~name:"Socket" @@ fun sw ->
-  let socket = Eio.Net.listen net ~sw ~reuse_addr:true ~backlog:500 addr in
+  let socket = Eio.Net.listen net ~sw ~reuse_addr:true ~backlog:5 addr in
   Eio.Fiber.fork ~sw (fun () -> run ~out:out_buffer socket);
   ()
 
