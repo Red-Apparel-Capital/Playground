@@ -15,7 +15,7 @@ let used_identities : (string, unit) Hashtbl.t =
 
 let create ~id ~action =
   match Hashtbl.mem used_identities id with
-  | true -> failwith "Duplicate node name"
+  | true -> failwith "Node: Duplicate node name"
   | false ->
       let in_buffer = Eio.Stream.create max_queue_size in
       let out_buffer = Eio.Stream.create max_queue_size in
