@@ -17,6 +17,7 @@ let write_from_out_to_in genesis neighbours =
 
 let process graph =
   let genesis = graph.source in
+
   Eio.Switch.run @@ fun sw ->
   let rec aux genesis =
     Eio.Fiber.fork ~sw (fun () -> Node.perform_action genesis);
