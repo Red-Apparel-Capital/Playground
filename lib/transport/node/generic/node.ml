@@ -1,12 +1,6 @@
-let max_queue_size = 256
+open Transport.Types
 
-type series =
-  | Tick of {
-      id : string;
-      datetime : Timedesc.t;
-      price : float;
-      volume : float;
-    }
+let max_queue_size = 256
 
 type t = {
   id : string;

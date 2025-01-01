@@ -1,12 +1,6 @@
-type t
+open Transport.Types
 
-type series =
-  | Tick of {
-      id : string;
-      datetime : Timedesc.t;
-      price : float;
-      volume : float;
-    }
+type t
 
 val create :
   id:string ->

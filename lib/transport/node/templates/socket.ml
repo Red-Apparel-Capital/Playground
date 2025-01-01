@@ -1,5 +1,6 @@
 (* Socket node template.
  * This file defines the template for a tcp socket node in the transport layer. *)
+open Transport.Types
 
 let max_size = 1024 (* Maximum size to which the message buffer might grow *)
 
@@ -7,7 +8,7 @@ let write_tick_data_to_buffer buffer id datetime price volume =
   let datetime = Converters.convert_to_timedesc datetime in
   let price = float_of_string price in
   let volume = float_of_string volume in
-  Eio.Stream.add buffer (Node.Tick { id; datetime; price; volume })
+  Eio.Stream.add buffer (Tick { id; datetime; price; volume })
 
 let handle_client flow addr ~out =
   Eio.traceln "Accepted connection from %a" Eio.Net.Sockaddr.pp addr;
