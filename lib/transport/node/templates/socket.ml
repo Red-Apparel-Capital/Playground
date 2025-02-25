@@ -29,6 +29,10 @@ let handle_injest ~out_buf flow =
               Eio.traceln "Client requested shutdown";
               Eio.Flow.close flow;
               `stop
+          | [ "/flat" ] ->
+              Eio.traceln "All positions closed";
+              Transport.Globals.position := 0;
+              `loop
           | _ ->
               Eio.traceln "Invalid message: %s" line;
               `loop)

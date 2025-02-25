@@ -1,6 +1,6 @@
 let main ~net =
   (* Create nodes *)
-  let socket_node = Node_templates.Socket.create ~id:"socket" ~port:1717 ~net in
+  let socket_node = Node_templates.Socket.create ~id:"socket" ~port:1070 ~net in
   let aggregator_node =
     Node_templates.Aggregator.create ~id:"aggregator" ~n:5
   in
