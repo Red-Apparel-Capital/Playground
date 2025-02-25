@@ -18,3 +18,5 @@ let initial_start_time =
 
 let timeseries : timestamped_ohclv Ring_buffer.t =
   Ring_buffer.create Config.lookback_period (initial_start_time, initial_ohclv)
+
+let position = ref 0

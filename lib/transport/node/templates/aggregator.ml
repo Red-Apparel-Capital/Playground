@@ -33,20 +33,26 @@ let aggregate_on_current ohclv price volume =
 let action n ~in_buffer ~out_buffer =
   while true do
     let series = Eio.Stream.take in_buffer in
-    match series with
-    | Tick { datetime; price; volume; _ } ->
-        let minute_start_time = get_n_minute_start_time datetime n in
-        if Ring_buffer.is_empty Transport.Globals.timeseries then
-          add_new_buffer_entry minute_start_time price volume
-        else
-          let start_time, ohclv =
-            Ring_buffer.get Transport.Globals.timeseries 0
-          in
-          if start_time <> minute_start_time then (
-            add_new_buffer_entry minute_start_time price volume;
-            Eio.Stream.add out_buffer (Minute { start_time; ohclv }))
-          else aggregate_on_current ohclv price volume
-    | _ -> failwith "Aggregator: Unexpected series type, expecting Tick"
+    let () =
+      match series with
+      | Tick { datetime; price; volume; _ } ->
+          let minute_start_time = get_n_minute_start_time datetime n in
+          if Ring_buffer.is_empty Transport.Globals.timeseries then
+            add_new_buffer_entry minute_start_time price volume
+          else
+            let start_time, ohclv =
+              Ring_buffer.get Transport.Globals.timeseries 0
+            in
+            if start_time <> minute_start_time then (
+              add_new_buffer_entry minute_start_time price volume;
+              Eio.Stream.add out_buffer (Minute { start_time; ohclv }))
+            else aggregate_on_current ohclv price volume
+      | Minute _ ->
+          failwith "Aggregator: Unexpected series, got Minute instead of Tick"
+      | Order _ ->
+          failwith "Aggregator: Unexpected series, got Order instead of Tick"
+    in
+    Eio.Fiber.yield ()
   done
 
 let create ~id ~n = Node.create ~id ~action:(action n)

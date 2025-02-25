@@ -17,14 +17,22 @@ let write_from_out_to_in genesis neighbours =
 
 let process graph =
   let genesis = graph.source in
+  let visited = Hashtbl.create max_edges in
 
   Eio.Switch.run @@ fun sw ->
   let rec aux genesis =
+    Eio.traceln "Processing node %s" (Node.get_id genesis);
+    Hashtbl.add visited genesis ();
     Eio.Fiber.fork ~sw (fun () -> Node.perform_action genesis);
     let neighbours =
       Hashtbl.find_opt graph.edges genesis |> Option.value ~default:[]
     in
     Eio.Fiber.fork ~sw (fun () -> write_from_out_to_in genesis neighbours);
-    List.iter (fun exodus -> aux exodus) neighbours
+    List.iter
+      (fun exodus ->
+        match Hashtbl.find_opt visited exodus with
+        | Some _ -> ()
+        | None -> aux exodus)
+      neighbours
   in
   aux genesis

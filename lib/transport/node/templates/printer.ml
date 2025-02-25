@@ -21,6 +21,10 @@ let action ~in_buffer ~out_buffer:_ =
             ohclv.volume
         in
         Eio.traceln "%s" info
+    | Order direction ->
+        Eio.traceln "Order: %s"
+          (match direction with Buy -> "Buy" | Sell -> "Sell");
+        Eio.Fiber.yield ()
   done
 
 let create () = Node.create ~id:"printer" ~action

@@ -16,4 +16,6 @@ let convert_to_timedesc (datetime : string) : Timedesc.t =
       let year, month, day = parse_date date in
       let hour, minute, second = parse_time time in
       Timedesc.make_exn ~year ~month ~day ~hour ~minute ~second ()
-  | _ -> failwith (Printf.sprintf "Converters: Invalid datetime format %s" datetime)
+  | _ ->
+      failwith
+        (Printf.sprintf "Converters: Invalid datetime format %s" datetime)
